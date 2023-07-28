@@ -1,15 +1,22 @@
-import { Button, CardMedia, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Button,
+  CardMedia,
+  CircularProgress,
+  Skeleton,
+} from "@mui/material";
 import Axios from "axios";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 const ImageUploader = () => {
-  const [file, setFile] = useState("");
+  const [isMouseIn, setIsMouseIn] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [imageUrl, setImageUrl] = useState<string>();
-  console.log("env: ", process.env.REACT_APP_UPLOAD_PRESET);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const changeHandler = (files: any) => {
+  const handleChange = (files: any) => {
     console.log(files);
     if (files[0]) {
       setFile(files[0]);
@@ -25,7 +32,24 @@ const ImageUploader = () => {
     }
   };
 
-  const clickHandler = () => {
+  const handleDragOver = (event: any) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: any) => {
+    console.log("handleDrop: ", event);
+    event.preventDefault();
+    event.stopPropagation();
+    if (event?.dataTransfer?.files) {
+      handleChange(event.dataTransfer.files);
+    }
+  };
+
+  const handleUploadClick = () => {
+    if (!file) {
+      toast("Drag and Drop or Select Image to Upload...");
+      return;
+    }
     const formData = new FormData();
     formData.append("file", file);
     formData.append(
@@ -53,35 +77,120 @@ const ImageUploader = () => {
       .finally(() => {
         setLoading(false);
       });
+  };
 
-    // const { loading, data } = useFetch(
-    //   process.env.REACT_APP_CLOUDINARY_URL as string,
-    //   formData
-    // );
+  const handleRemoveClick = () => {
+    if (file) {
+      setFile(null);
+    }
+    setImageUrl("");
   };
 
   return (
     <div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          changeHandler(e.target.files);
+      <Box m={2}>
+        {loading ? (
+          <Skeleton
+            variant="rectangular"
+            width="30vw"
+            height="20vw"
+            sx={{
+              marginX: "auto",
+            }}
+          />
+        ) : (
+          <Box
+            style={{ position: "relative" }}
+            sx={{
+              width: "30vw",
+              height: "20vw",
+              marginX: "auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid grey",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: "grey",
+                opacity: [0.2, 0.4, 0.2],
+              },
+            }}
+            onMouseEnter={() => setIsMouseIn(true)}
+            onMouseLeave={() => setIsMouseIn(false)}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef?.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              hidden
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                handleChange(e.target.files);
+              }}
+            />
+            {!imageUrl && "Drag and Drop or Select Image to Upload..."}
+            {imageUrl && (
+              <CardMedia
+                component="img"
+                height="100%"
+                width="100%"
+                title="Drag and Drop or Select Image to Upload..."
+                image={imageUrl}
+                sx={{
+                  objectFit: "cover",
+                }}
+              />
+            )}
+            {imageUrl && isMouseIn && (
+              <Box
+                style={{
+                  position: "absolute",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                Drag and Drop or Select Image to Upload...
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 2,
+          textAlign: "center",
         }}
-      />
-      {loading ? (
-        <CircularProgress color="secondary" />
-      ) : (
-        <Button
-          variant="contained"
-          color="secondary"
-          disabled={loading}
-          onClick={clickHandler}
-        >
-          Upload
-        </Button>
-      )}
-      {imageUrl && <CardMedia component="img" height="100%" image={imageUrl} />}
+      >
+        {loading ? (
+          <CircularProgress color="secondary" />
+        ) : (
+          <Button
+            variant="contained"
+            color="secondary"
+            disabled={!file}
+            onClick={handleUploadClick}
+          >
+            Upload
+          </Button>
+        )}
+        {loading ? (
+          <CircularProgress color="secondary" />
+        ) : (
+          <Button
+            variant="contained"
+            color="secondary"
+            disabled={!file}
+            onClick={handleRemoveClick}
+          >
+            Remove
+          </Button>
+        )}
+      </Box>
     </div>
   );
 };

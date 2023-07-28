@@ -1,5 +1,4 @@
 import {
-  Link,
   Navigate,
   RouterProvider,
   createBrowserRouter,
@@ -10,18 +9,7 @@ import ImageUploader from "./components/image-uploader/image-uploader";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to={"/dashboard"} replace />,
-    // children: [
-    //   {
-    //     path: "dashboard",
-    //     element: <Link to={"/"}>Home</Link>,
-    //     loader: teamLoader,
-    //   },
-    // ],
-  },
-  {
-    path: "dashboard",
-    element: <Link to={"/uploader"}>Uploader</Link>,
+    element: <Navigate to={"/uploader"} replace />,
   },
   {
     path: "uploader",
